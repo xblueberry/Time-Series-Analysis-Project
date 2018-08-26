@@ -20,19 +20,19 @@ exp_ts<-ts(`Goods, Value of Exports, National Currency`,frequency=4,start=c(1960
 exp_ts
 ts.plot(exp_ts,ylab="Value of exports")
 
-#log-differences
+#take log-differences
 logexp_ts<-log(exp_ts)
 ts.plot(logexp_ts)
 dlogexp_ts<-diff(log(exp_ts))
 ts.plot(dlogexp_ts,ylab="diff (log (Value of exports))")
-acf(dlogexp_ts)
+acf(dlogexp_ts) #autocorrelation plot
 
 #correct for seasonality
 monthplot(dlogexp_ts, ylab="diff (log (Value of exports))")
 dslogexp_ts<-diff(diff(log(exp_ts)),lag=4)
 ts.plot(dslogexp_ts,ylab="diff_season (diff (log (Value of exports)))")
 
-#Seems like a structural break: subset 1990-2017
+#Seems like a structural break: take only subset 1990-2017
 
 detach(Trade)
 Trade<-Trade[121:230,]
@@ -43,6 +43,7 @@ ts.plot(exp_ts,ylab="Value of exports")
 
 logexp_ts<-log(exp_ts)
 ts.plot(logexp_ts)
+
 #test if deterministic or stochastic trend
 max.lag<-round(sqrt(length(exp_ts))) #10
 CADFtest(logexp_ts, type= "trend", criterion= "BIC", max.lag.y=max.lag)
@@ -63,6 +64,7 @@ CADFtest(dslogexp_ts, type= "drift", criterion= "BIC", max.lag.y=max.lag)
 #correlograms
 acf(dslogexp_ts,main="")
 pacf(dslogexp_ts,main="")
+
 
 
 #SARIMA modeling 
@@ -282,7 +284,7 @@ ts.plot(dslogIMP,dslogIMP_forecast,dslogIMP_lower,dslogIMP_upper,col=c("black","
         xlim=c(2005,2020),ylab="dslogIMP")
 
 
-#Cointegration: Engle-Granger
+#Test cointegration: Engle-Granger
 coint1 <- lm(logexp_ts ~ logimp_ts)
 summary(coint1)
 plot.ts(coint1$res)
@@ -292,7 +294,7 @@ summary(coint2)
 plot.ts(coint2$res)
 CADFtest(coint2$res, type="drift", criterion="BIC", max.lag.y=10)
 
-#Cointegration: johansen test
+#Test cointegration: johansen test
 logTrade<-data.frame(logexp_ts,logimp_ts)
 names(logTrade)<-c("logEXP","logIMP")
 
@@ -304,7 +306,7 @@ maxeigen_test<-ca.jo(logTrade,type="eigen",K=5,ecdet="const",spec="transitory",s
 summary(maxeigen_test)
 
 
-#Persistence in volatility?
+#Assess if there is persistence in volatility
 library(fGarch)
 acf((fit_ma$residuals)^2)
 acf((fit_ar$residuals)^2)
